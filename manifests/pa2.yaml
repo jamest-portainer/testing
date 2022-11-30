@@ -1,0 +1,99 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: portainer2
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: portainer-sa-clusteradmin2
+  namespace: portainer2
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: portainer-crb-clusteradmin2
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin2
+subjects:
+  - kind: ServiceAccount
+    name: portainer-sa-clusteradmin2
+    namespace: portainer2
+# Optional: can be added to expose the agent port 80 to associate an Edge key.
+# ---
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: portainer-agent
+#   namespace: portainer
+# spec:
+#   type: LoadBalancer
+#   selector:
+#     app: portainer-agent
+#   ports:
+#     - name: http
+#       protocol: TCP
+#       port: 80
+#       targetPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: portainer-agent2
+  namespace: portainer2
+spec:
+  clusterIP: None
+  selector:
+    app: portainer-agent2
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: portainer-agent2
+  namespace: portainer2
+spec:
+  selector:
+    matchLabels:
+      app: portainer-agent2
+  template:
+    metadata:
+      labels:
+        app: portainer-agent2
+    spec:
+      serviceAccountName: portainer-sa-clusteradmin2
+      containers:
+        - name: portainer-agent2
+          image: portainer/agent:2.15.1
+          imagePullPolicy: Always
+          env:
+            - name: LOG_LEVEL
+              value: INFO
+            - name: KUBERNETES_POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: EDGE
+              value: "1"
+            - name: AGENT_CLUSTER_ADDR
+              value: "portainer-agent2"
+            - name: AGENT_SECRET
+              valueFrom:
+                configMapKeyRef:
+                  name: portainer-agent-edge2
+                  key: EDGE_SECRET
+                  optional: true
+            - name: EDGE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: portainer-agent-edge-key2
+                  key: edge.key
+          envFrom:
+            - configMapRef:
+                name: portainer-agent-edge2
+          ports:
+            - containerPort: 9001
+              protocol: TCP
+            - containerPort: 80
+              protocol: TCP

@@ -1,0 +1,7 @@
+version: '3'
+services:
+ app:
+  image: ${IMAGE:-nginx:latest}
+  environment:
+   - env1=${var1}
+   - env2=${var2}
