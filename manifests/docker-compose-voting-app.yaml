@@ -1,4 +1,4 @@
-version: "3.9"
+version: "3"
 services:
 
   redis:
@@ -23,7 +23,6 @@ services:
       - backend
     deploy:
       placement:
-        max_replicas_per_node: 1
         constraints:
           - "node.role==manager"
 
