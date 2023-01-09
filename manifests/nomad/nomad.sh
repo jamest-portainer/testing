@@ -86,7 +86,7 @@ main() {
 
     info "Downloading agent job spec..."
 
-    curl -L https://raw.githubusercontent.com/jamest-portainer/testing/main/manifests/portainer-agent-edge-nomad.hcl -o $job_file_name || errorAndExit "Unable to download agent jobspec"
+    curl -L https://raw.githubusercontent.com/jamest-portainer/testing/main/manifests/nomad/portainer-agent-edge-nomad.hcl -o $job_file_name || errorAndExit "Unable to download agent jobspec"
 
     # if env vars is a valid string, try to append them to env section in the agent job file
     if [ ! -z "$ENV_VARS" ]; then
