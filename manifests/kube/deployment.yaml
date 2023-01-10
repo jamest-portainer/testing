@@ -20,5 +20,5 @@ spec:
         ports:
         - containerPort: 80
         env:
-        - name: FAVE_COLOUR_ENV_VAR
+        - name: VAR_FAVE_COLOUR
           value: "Blue"
