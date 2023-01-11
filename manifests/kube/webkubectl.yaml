@@ -1,3 +1,4 @@
+# From https://www.civo.com/learn/webkubectl-running-kubectl-commands-from-your-web-browser
 ---
 apiVersion: v1
 kind: Secret
