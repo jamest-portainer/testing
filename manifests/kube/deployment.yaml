@@ -20,5 +20,5 @@ spec:
         ports:
         - containerPort: 80
         env:
-        - name: VAR_FAVE_COLOUR
-          value: "Red"
+        - name: VAR_APP_DIR
+          value: "\usr\local\abc"
