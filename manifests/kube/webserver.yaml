@@ -22,6 +22,9 @@ spec:
             - http.server
           ports:
             - containerPort: 8000
+          env:
+          - name: VAR_FAVE_COLOUR
+            value: "Green"
 ---
 # https://kubernetes.io/docs/concepts/services-networking/service/
 apiVersion: v1
