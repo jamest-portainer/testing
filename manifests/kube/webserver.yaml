@@ -23,8 +23,12 @@ spec:
           ports:
             - containerPort: 8000
           env:
-          - name: VAR_FAVE_COLOUR
-            value: "Green"
+          - name: VAR_FAVE_COLOUR1
+            value: "Red"
+          - name: VAR_FAVE_COLOUR2
+            value: "Orange"
+          - name: VAR_FAVE_COLOUR3
+            value: "Yellow"
 ---
 # https://kubernetes.io/docs/concepts/services-networking/service/
 apiVersion: v1
