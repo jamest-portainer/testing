@@ -14,7 +14,7 @@ spec:
         app: init-container-msg-app
     spec:
       containers:
-          image: busybox
+        - image: busybox
           name: init-container-msg-container-main
           volumeMounts:
             - mountPath: /init-container-msg-mount-path
