@@ -21,4 +21,4 @@ spec:
           - containerPort: 80
         env:
           - name: VAR_APP_DIR
-            value: "\usr\local\abc"
+            value: "/usr/local/abc"
