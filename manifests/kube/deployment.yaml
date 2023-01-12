@@ -18,7 +18,7 @@ spec:
       - name: nginx
         image: nginx:latest
         ports:
-        - containerPort: 80
+          - containerPort: 80
         env:
-        - name: VAR_APP_DIR
-          value: "\usr\local\abc"
+          - name: VAR_APP_DIR
+            value: "\usr\local\abc"
