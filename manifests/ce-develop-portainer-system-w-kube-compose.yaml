@@ -18,8 +18,7 @@ services:
       
       docker run --name portainer-dind -d -p 8000:8000 -p 9000:9000 -p 9443:9443 --restart=always 
       -v /var/run/docker.sock:/var/run/docker.sock -v portainer_data:/data portainerci/portainer:develop
-      --admin-password="$$PWD"
-      --license-key="2-9M9AbQbBsuat+rlYRBwDEJOo1KSmwoe0kvIfIpaBxSgb0bMU0d1NDhiSox3YGKAHDxRCMg2cRn2CTq/r0M0KiaxLD50=" && 
+      --admin-password="$$PWD" && 
       
       echo "---> Deploy Agent" &&
       
