@@ -1,0 +1,142 @@
+version: '3'
+services:
+  dind-test-test:
+    image: docker:dind
+    privileged: true
+    ports:
+      - 4000-6000:9443
+    command: >-
+      sh -c '(
+      sleep 10 && 
+      unset DOCKER_HOST && 
+      apk add apache2-utils && apk add util-linux && apk add curl && apk add bash && apk add jq &&
+      export PWD=$$(htpasswd -nbB admin "Porta!ner2020" | cut -d ":" -f 2 | awk "NR==1{print $$1}") &&
+      export LOCAL_IP=$$(ifconfig eth0 | awk -F: '\''/inet addr/ { print $$2 }'\'' | cut -d " " -f1) &&
+      
+      echo "---> Local IP: $$LOCAL_IP" &&
+      echo "---> Deploy Portainer" &&
+      
+      docker run --name portainer-dind -d -p 8000:8000 -p 9000:9000 -p 9443:9443 --restart=always 
+      -v /var/run/docker.sock:/var/run/docker.sock -v portainer_data:/data portainerci/portainer:develop
+      --admin-password="$$PWD"
+      --license-key="2-9M9AbQbBsuat+rlYRBwDEJOo1KSmwoe0kvIfIpaBxSgb0bMU0d1NDhiSox3YGKAHDxRCMg2cRn2CTq/r0M0KiaxLD50=" && 
+      
+      echo "---> Deploy Agent" &&
+      
+      docker run -d -p 9001:9001 --name portainer_agent --restart=always 
+      -v /var/run/docker.sock:/var/run/docker.sock 
+      -v /var/lib/docker/volumes:/var/lib/docker/volumes 
+      portainerci/agent:develop &&
+       
+      sleep 10 &&
+       
+      echo "---> Log in Portainer" &&
+         
+     
+      export JWT=$$(curl --request POST --insecure --silent 
+      --url "https://$$LOCAL_IP:9443/api/auth" 
+      --header "Content-Type: application/json" 
+      --data '\''{"username":"admin", "password":"Porta!ner2020"}'\'' | jq -r ".jwt") &&
+      
+      echo "---> JWT: $$JWT" &&
+      
+      curl --request GET --insecure --write-out "%{http_code}" --url "https://$$LOCAL_IP:9443/api/settings/public" &&
+     
+      curl --request GET --insecure --write-out "%{http_code}" --url "https://$$LOCAL_IP:9001/ping" &&
+
+      echo "---> Add Local Environment to Portainer" &&
+      
+      curl --request POST --insecure --silent 
+      --url "https://$$LOCAL_IP:9443/api/endpoints" 
+      --header "Authorization: Bearer $$JWT" 
+      --header "Content-Type: multipart/form-data" 
+      --form "Name=local" 
+      --form "EndpointCreationType=1" 
+      --form "URL=" 
+      --form "PublicURL="
+      --form "TagIds=[]" 
+      --form "Gpus=[]" &&
+      
+      echo "---> Add Agent Environment to Portainer" &&
+      
+      curl --request POST --insecure --silent 
+      --url "https://$$LOCAL_IP:9443/api/endpoints" 
+      --header "Authorization: Bearer $$JWT" 
+      --header "Content-Type: multipart/form-data" 
+      --form "Name=local-agent" 
+      --form "EndpointCreationType=2" 
+      --form "URL=tcp://$$LOCAL_IP:9001" 
+      --form "GroupID=1" 
+      --form "TagIds=[]" 
+      --form "Gpus=" 
+      --form "PublicURL=$$LOCAL_IP" 
+      --form "TLS=true" 
+      --form "TLSSkipVerify=true" 
+      --form "TLSSkipClientVerify=true" &&
+      
+      echo "---> Add Edge Agent Environment to Portainer" &&
+      
+      export EDGE_KEY=$$(curl --request POST --insecure --silent 
+      --url "https://$$LOCAL_IP:9443/api/endpoints" 
+      --header "Authorization: Bearer $$JWT" 
+      --header "Content-Type: multipart/form-data" 
+      --form "Name=local-edge-agent" 
+      --form "EndpointCreationType=4" 
+      --form "URL=https://$$LOCAL_IP:9443" 
+      --form "GroupID=1" 
+      --form "TagIds=[]" 
+      --form "Gpus=[]" 
+      --form "CheckinInterval=0" 
+      --form "IsEdgeDevice=false" | jq -r ".EdgeKey") &&
+
+      echo "---> EDGE_KEY: $$EDGE_KEY" &&
+      
+      echo "---> Deploy Edge Agent" &&
+
+      docker run -d --name portainer_edge_agent --restart always 
+      -v /var/run/docker.sock:/var/run/docker.sock 
+      -v /var/lib/docker/volumes:/var/lib/docker/volumes 
+      -v /:/host 
+      -v portainer_agent_data:/data 
+      -e EDGE=1 
+      -e EDGE_ID=f97f3380-204f-424c-bc6e-24f8500cc3e2 
+      -e EDGE_KEY=$$EDGE_KEY 
+      -e EDGE_INSECURE_POLL=1 
+      portainerci/agent:develop &&
+      
+       echo "---> Install Kubernetes" &&
+      
+      apk add sudo &&
+      sudo curl -LO "https://dl.k8s.io/release/$$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" &&
+      sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl &&
+  
+      wget -q -O - https://raw.githubusercontent.com/rancher/k3d/main/install.sh | sh &&
+      k3d cluster create &&
+      k3d cluster edit k3s-default --port-add $$LOCAL_IP:30776-30779:30776-30779@server:0 &&
+      kubectl config use-context k3d-k3s-default &&
+      
+      echo "---> Deploy Portainer Agent on Kubernetes" &&
+      
+      kubectl apply -f https://downloads.portainer.io/ee2-15/portainer-agent-k8s-nodeport.yaml &&
+      
+      sleep 120 &&
+      
+      echo "---> Add Agent Environment for Kube to Portainer" &&
+      
+      curl --request POST --insecure --silent 
+      --url "https://$$LOCAL_IP:9443/api/endpoints" 
+      --header "Authorization: Bearer $$JWT" 
+      --header "Content-Type: multipart/form-data" 
+      --form "Name=kube-agent" 
+      --form "EndpointCreationType=2" 
+      --form "URL=tcp://$$LOCAL_IP:30778" 
+      --form "GroupID=1" 
+      --form "TagIds=[]" 
+      --form "Gpus="  
+      --form "TLS=true" 
+      --form "TLSSkipVerify=true" 
+      --form "TLSSkipClientVerify=true" &&
+      
+      echo "---> Done"
+      )& 
+      dockerd-entrypoint.sh'
