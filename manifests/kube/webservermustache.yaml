@@ -30,7 +30,7 @@ spec:
           - name: VAR_FAVE_COLOUR3
             value: "Yellow"
           - name: VAR_FAVE_COLOUR{{colourcount}
-            value: "{colourvalue}
+            value: "{{colourvalue}}"
 ---
 # https://kubernetes.io/docs/concepts/services-networking/service/
 apiVersion: v1
