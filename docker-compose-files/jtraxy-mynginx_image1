@@ -1,0 +1,7 @@
+version: '3'
+services:
+  jtest:
+    image: jtraxy/mynginx_image1:v1
+    privileged: true
+    ports:
+      - 4000-4002:9443
